@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: road-cutting-permission
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rcp
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
