@@ -653,22 +653,11 @@ The PostgreSQL database confirmed the application status and transition history.
 
 # Frontend Scope
 
-The assignment specifies a React/TypeScript portal containing:
+The assignment requires a React/TypeScript portal for both applicant and officer workflows.
 
-* Applicant application form
-* Live fee preview
-* My Applications
-* Application detail/timeline
-* Officer queue
-* Role-based action controls
-* Loading, empty and error states
-* Responsive applicant UI
+The React frontend was not completed within the available time box. I deliberately prioritized the backend core requirements, including fee calculation, configuration-driven rates, tenant isolation, workflow configuration, persistence, search, database migrations and automated tests.
 
-The React frontend was **not completed within the available time box**.
-
-I deliberately stopped after completing and testing the backend rather than adding an incomplete frontend that could compromise the correctness of the core service.
-
-The backend API is designed to provide the data required by such a frontend, including application state and transition history.
+I have therefore not represented the frontend as complete in this submission. The backend APIs were manually tested using PowerShell and PostgreSQL and are ready to be consumed by the required portal.
 
 ---
 
@@ -715,11 +704,13 @@ For a production implementation, I would introduce versioned rate configurations
 
 # Concurrency
 
-Application number generation is protected by a database row lock in the sequence table, together with a unique constraint on the application number.
+Application number generation uses a database-backed sequence table and a row-level lock for the tenant, financial year and module. The application number also has a database unique constraint.
 
-Therefore, simultaneous creates for the same tenant, financial year and module cannot intentionally receive the same sequence value.
+This prevents two concurrent creates from intentionally receiving the same application number.
 
-For workflow actions, the current implementation records the application version and persists transitions. With two officers acting concurrently, production hardening should ensure optimistic locking is used to prevent a stale officer action from overwriting a newer state. The desired behaviour is that one valid action succeeds and the other receives a clear 4xx conflict/state error and must refresh the application.
+For workflow actions, the application is loaded and updated inside a transactional service method. The database entity contains a version field, but full optimistic-lock conflict handling has not been completed in this time-boxed implementation.
+
+In a production version, I would use optimistic locking explicitly for workflow updates so that if two officers act on the same application simultaneously, one action succeeds and the stale action receives a clear conflict response rather than being allowed to overwrite the newer state.
 
 ---
 
