@@ -350,7 +350,53 @@ class ApplicationServiceImplTest {
                         any()
                 );
     }
+    @Test
+    void shouldSearchAllApplicationsWhenNoFiltersProvided() {
 
+        Application application = createApplication();
+
+        Page<Application> page =
+                new PageImpl<>(
+                        List.of(application),
+                        PageRequest.of(0, 20),
+                        1
+                );
+
+        when(applicationRepository.findByTenantId(
+                eq("dehradun"),
+                any()
+        )).thenReturn(page);
+
+        SearchApplicationRequest request =
+                new SearchApplicationRequest(
+                        requestInfo,
+                        null,
+                        null,
+                        null,
+                        0,
+                        20
+                );
+
+        SearchApplicationResponse response =
+                applicationService.search(request);
+
+        assertNotNull(response);
+        assertEquals(1, response.Applications().size());
+        assertEquals(1, response.totalCount());
+
+        assertEquals(
+                "DEH-RCP-000001-2026-27",
+                response.Applications()
+                        .get(0)
+                        .applicationNumber()
+        );
+
+        verify(applicationRepository)
+                .findByTenantId(
+                        eq("dehradun"),
+                        any()
+                );
+    }
     private Application createApplication() {
 
         Application application = new Application();
