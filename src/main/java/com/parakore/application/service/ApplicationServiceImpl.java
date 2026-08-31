@@ -271,7 +271,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @jakarta.transaction.Transactional
+    @Transactional
     public ActionApplicationResponse action(
             ActionApplicationRequest request) {
 

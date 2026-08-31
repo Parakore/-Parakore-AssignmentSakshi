@@ -18,6 +18,8 @@ public record SearchApplicationRequest(
 
         String mobileNumber,
 
+        String applicantUuid,
+
         @Min(0)
         Integer offset,
 

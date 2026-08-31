@@ -150,6 +150,7 @@ class ApplicationControllerTest {
                         null,
                         ApplicationStatus.APPLIED,
                         null,
+                         null,
                         0,
                         20
                 );

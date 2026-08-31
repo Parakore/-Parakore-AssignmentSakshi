@@ -230,6 +230,7 @@ class ApplicationServiceImplTest {
                         "DEH-RCP-000001-2026-27",
                         null,
                         null,
+                        null,
                         0,
                         20
                 );
@@ -286,6 +287,7 @@ class ApplicationServiceImplTest {
                         null,
                         ApplicationStatus.APPLIED,
                         null,
+                        null,
                         0,
                         20
                 );
@@ -328,6 +330,7 @@ class ApplicationServiceImplTest {
                         null,
                         null,
                         "9990000001",
+                        null,
                         0,
                         20
                 );
@@ -370,6 +373,7 @@ class ApplicationServiceImplTest {
         SearchApplicationRequest request =
                 new SearchApplicationRequest(
                         requestInfo,
+                        null,
                         null,
                         null,
                         null,
