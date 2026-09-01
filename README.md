@@ -2,35 +2,36 @@
 
 ## Overview
 
-This project implements the backend API for a multi-tenant Road Cutting Permission service using Java 17+, Spring Boot 3, PostgreSQL and Flyway.
+This project implements a multi-tenant **Road Cutting Permission** service with a Spring Boot backend, PostgreSQL database, Flyway migrations, configuration-driven fee calculation, workflow management, and a React/TypeScript frontend.
 
-The service supports:
+The solution supports:
 
 * Fee calculation based on external JSON configuration
 * Tenant-specific fee overrides
 * Road type validation
-* Application creation
 * Server-side fee recomputation
-* Application lifecycle/workflow
-* Role-based workflow actions
+* Application creation
+* Financial-year-based application numbers
+* Role-based application workflow
 * Application transition history
 * Tenant isolation
 * Application search with pagination
-* Financial-year-based application numbers
 * PostgreSQL persistence
 * Flyway database migrations
 * Automated unit tests
+* React/TypeScript applicant and officer portal
+* Backend/frontend integration
 
-Authentication is intentionally out of scope as specified in the assignment. The caller identity and role are taken from `RequestInfo.userInfo` in the request body.
+Authentication is intentionally out of scope as specified in the assignment. Caller identity and roles are supplied through `RequestInfo.userInfo` in the request.
 
 ---
 
-## Technology Stack
+# Technology Stack
 
-### Backend
+## Backend
 
-* Java 17+
-* Spring Boot 3
+* Java 21
+* Spring Boot 3.5.x
 * Spring Web
 * Spring Data JPA
 * PostgreSQL 16
@@ -41,76 +42,150 @@ Authentication is intentionally out of scope as specified in the assignment. The
 * Mockito
 * Docker / Docker Compose
 
-### Configuration
+## Frontend
 
-The following configuration is externalized:
+* React
+* TypeScript
+* Vite
+* npm
+* Fetch API
+* Responsive UI
 
-* `src/main/resources/fee-rates.json`
-* `src/main/resources/workflow-rules.json`
+## Configuration
 
-This keeps fee rules and workflow transitions outside the service business logic.
+Business configuration is externalized into:
+
+```text
+src/main/resources/fee-rates.json
+src/main/resources/workflow-rules.json
+```
+
+This keeps fee rules and workflow transitions outside the core business logic.
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
-src
-├── main
-│   ├── java
-│   │   └── com.parakore
-│   │       ├── application
-│   │       │   ├── controller
-│   │       │   ├── dto
-│   │       │   ├── entity
-│   │       │   ├── repository
-│   │       │   └── service
-│   │       ├── common
-│   │       │   └── exception
-│   │       ├── config
-│   │       ├── fee
-│   │       │   ├── dto
-│   │       │   └── service
-│   │       └── RoadCuttingPermissionApplication.java
-│   │
-│   └── resources
-│       ├── db
-│       │   └── migration
-│       │       └── V1__create_initial_schema.sql
-│       ├── application.yml
-│       ├── fee-rates.json
-│       └── workflow-rules.json
+road-cutting-permission/
 │
-└── test
-    └── java
-        └── com.parakore
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com.parakore/
+│   │   │       ├── application/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── entity/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       │
+│   │   │       ├── common/
+│   │   │       │   └── exception/
+│   │   │       │
+│   │   │       ├── config/
+│   │   │       │
+│   │   │       ├── fee/
+│   │   │       │   ├── dto/
+│   │   │       │   └── service/
+│   │   │       │
+│   │   │       └── RoadCuttingPermissionApplication.java
+│   │   │
+│   │   └── resources/
+│   │       ├── db/
+│   │       │   └── migration/
+│   │       │       └── V1__create_initial_schema.sql
+│   │       ├── application.yml
+│   │       ├── fee-rates.json
+│   │       └── workflow-rules.json
+│   │
+│   └── test/
+│       └── java/
+│           └── com.parakore/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docker-compose.yml
+├── pom.xml
+└── README.md
 ```
 
 ---
 
-## Running the Backend
+# Architecture
 
-### Prerequisites
+The application is implemented as a layered Spring Boot service.
 
-* Java 17 or later
+```text
+React / TypeScript Frontend
+          |
+          | HTTP / JSON
+          v
+Spring Boot REST Controllers
+          |
+          v
+Application Services
+          |
+     +----+----+
+     |         |
+     v         v
+Fee Service   Workflow Service
+     |         |
+     v         v
+JSON Config   Workflow Config
+     |
+     v
+PostgreSQL / JPA
+```
+
+The frontend communicates with the backend REST APIs and displays application creation, fee calculation results, search results and workflow actions.
+
+---
+
+# Running the Application
+
+## Prerequisites
+
+Install:
+
+* Java 21 or later
 * Maven
+* Node.js / npm
 * Docker Desktop
 
-### Start PostgreSQL
+Verify:
 
-The project includes Docker Compose configuration.
+```bash
+java -version
+mvn -version
+node --version
+npm --version
+```
+
+---
+
+# 1. Start PostgreSQL
+
+From the project root:
 
 ```bash
 docker compose up -d
 ```
 
-Verify that PostgreSQL is running:
+Verify the container:
 
 ```bash
 docker ps
 ```
 
-The PostgreSQL container is exposed on:
+PostgreSQL is exposed on:
 
 ```text
 localhost:5432
@@ -134,7 +209,9 @@ Password:
 postgres
 ```
 
-### Start the application
+---
+
+# 2. Start the Backend
 
 From the project root:
 
@@ -142,29 +219,74 @@ From the project root:
 mvn spring-boot:run
 ```
 
-The API runs on:
+The backend runs on:
 
 ```text
 http://localhost:8080
 ```
 
+Flyway automatically creates the database schema during startup.
+
 ---
 
-## Database Migration
+# 3. Start the React Frontend
 
-Flyway is enabled and migrations are located under:
+Open a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs on:
+
+```text
+http://localhost:5173
+```
+
+Open the URL in a browser.
+
+The frontend communicates with the Spring Boot backend running on port `8080`.
+
+---
+
+# Production Frontend Build
+
+The React application can be built using:
+
+```bash
+cd frontend
+npm run build
+```
+
+The production files are generated in:
+
+```text
+frontend/dist
+```
+
+The production build was successfully verified during development.
+
+---
+
+# Database Migration
+
+Flyway is enabled through `application.yml`.
+
+Migration location:
 
 ```text
 src/main/resources/db/migration
 ```
 
-The initial schema is created by:
+Initial migration:
 
 ```text
 V1__create_initial_schema.sql
 ```
 
-Hibernate is configured with:
+Hibernate uses:
 
 ```yaml
 spring:
@@ -173,11 +295,25 @@ spring:
       ddl-auto: validate
 ```
 
-Therefore, Hibernate does not automatically modify the database schema.
+Therefore Hibernate validates the schema rather than automatically modifying it.
+
+The main tables are:
+
+```text
+applications
+application_transitions
+application_sequences
+```
 
 ---
 
 # API Endpoints
+
+Base path:
+
+```text
+/rcp/v1
+```
 
 ## 1. Calculate Fee
 
@@ -185,7 +321,7 @@ Therefore, Hibernate does not automatically modify the database schema.
 POST /rcp/v1/_calculate
 ```
 
-This endpoint provides a stateless fee preview.
+Provides a stateless fee calculation/preview.
 
 Example:
 
@@ -218,46 +354,58 @@ Example:
 }
 ```
 
-The response contains the complete fee breakdown and:
+The response contains:
 
-```json
-"reviewRef": "K7Q2"
-```
+* Area
+* Restoration charge
+* Permission fee
+* Urgency surcharge
+* Security deposit
+* Total amount
+* Review reference
 
-Money calculations use `BigDecimal`, not `double`.
+The implementation uses `BigDecimal` for monetary calculations.
 
 ---
 
-## 2. Create Application
+# 2. Create Application
 
 ```text
 POST /rcp/v1/_create
 ```
 
-The application is created in:
+A successful application starts in:
 
 ```text
 APPLIED
 ```
 
-The fee is always recalculated on the server during creation. The client cannot be trusted to supply the final amount.
+During creation:
 
-The service assigns an application number such as:
+1. Tenant identity is validated.
+2. The application date is determined server-side.
+3. Fees are recalculated server-side.
+4. A financial-year sequence is obtained.
+5. The application number is generated.
+6. The application is persisted.
+7. A `CREATE` transition is recorded.
+
+Example application number:
 
 ```text
-DEH-RCP-000006-2026-27
+DEH-RCP-000007-2026-27
 ```
 
 The number contains:
 
-* City prefix
-* RCP module code
+* Tenant/city prefix
+* Module code
 * Zero-padded sequence
-* Indian financial year
+* Financial year
 
 ---
 
-## 3. Workflow Action
+# 3. Workflow Action
 
 ```text
 POST /rcp/v1/_action
@@ -273,58 +421,75 @@ SEND_BACK
 CANCEL
 ```
 
-The caller's role is read from:
+The caller's role is supplied through:
 
 ```text
 RequestInfo.userInfo.roles
 ```
 
-The role is checked server-side.
+The role is checked against the configuration-driven workflow rules.
 
-Example workflow:
+Workflow:
 
 ```text
-APPLIED
-   |
- VERIFY
-   v
-PENDING_APPROVAL
-   |
-   +---- APPROVE ----> APPROVED
-   |
-   +---- REJECT -----> REJECTED
-   |
-   +---- SEND_BACK --> APPLIED
+                    VERIFY
+APPLIED ------------------------------> PENDING_APPROVAL
+   |                                         |
+   |                                         |
+   | CANCEL                           +------+------+
+   |                                  |             |
+   v                               APPROVE        REJECT
+CANCELLED                            |             |
+                                     v             v
+                                 APPROVED       REJECTED
 
-APPLIED
-   |
- CANCEL
-   v
-CANCELLED
+PENDING_APPROVAL
+       |
+       | SEND_BACK
+       v
+    APPLIED
 ```
 
-Every successful transition is stored in `application_transitions`.
+Every successful workflow action is recorded in:
+
+```text
+application_transitions
+```
 
 ---
 
-## 4. Search Applications
+# 4. Search Applications
 
 ```text
 POST /rcp/v1/_search
 ```
 
-Supported filters include:
+Supported filters:
 
-* application number
-* status
-* mobile number
-* applicant UUID
-* offset
-* limit
+* Application number
+* Status
+* Mobile number
+* Applicant UUID
+* Offset
+* Limit
 
-The limit has a server-side maximum of 100.
+The maximum server-side limit is:
 
-All searches are tenant scoped.
+```text
+100
+```
+
+Searches are always tenant scoped.
+
+Examples of supported statuses:
+
+```text
+APPLIED
+PENDING_APPROVAL
+APPROVED
+REJECTED
+CANCELLED
+```
 
 ---
 
@@ -336,11 +501,13 @@ Fee configuration is stored in:
 src/main/resources/fee-rates.json
 ```
 
-The calculation service accesses configuration through the `FeeRateProvider` interface.
+The calculation service accesses the configuration through the `FeeRateProvider` abstraction.
 
-This allows the configuration source to be replaced later by another implementation such as a remote configuration service without changing the calculation logic.
+This allows the configuration source to be replaced later without changing the core calculation logic.
 
-### Area
+---
+
+## Area
 
 ```text
 ceil(length × width)
@@ -348,19 +515,23 @@ ceil(length × width)
 
 The multiplication is performed first and the resulting area is rounded up.
 
-For example:
+Example:
 
 ```text
 12.5 × 1.2 = 15
 ```
 
-### Restoration Charge
+---
+
+## Restoration Charge
 
 ```text
 area × restorationRatePerSqm
 ```
 
-### Permission Fee
+---
+
+## Permission Fee
 
 ```text
 area × permissionRatePerSqmPerDay × durationInDays
@@ -374,9 +545,11 @@ GOVERNMENT_AGENCY
 
 the permission fee is zero.
 
-### Urgency Surcharge
+---
 
-A surcharge is applied only when:
+## Urgency Surcharge
+
+The surcharge applies when:
 
 ```text
 proposedStartDate - applicationDate < urgencyThresholdDays
@@ -384,9 +557,15 @@ proposedStartDate - applicationDate < urgencyThresholdDays
 
 The comparison is strict.
 
-Therefore, exactly 3 days before the proposed start date does not attract the surcharge.
+Therefore, when the proposed start date is exactly three days away and the threshold is three days:
 
-### Security Deposit
+```text
+No urgency surcharge
+```
+
+---
+
+## Security Deposit
 
 ```text
 max(
@@ -395,7 +574,9 @@ max(
 )
 ```
 
-### Total
+---
+
+## Total
 
 ```text
 restoration
@@ -404,20 +585,20 @@ restoration
 + security deposit
 ```
 
-The final amount uses `HALF_UP` rounding.
+Monetary calculations use `BigDecimal`.
 
 ---
 
 # Tenant-Specific Configuration
 
-The default configuration contains:
+The configuration contains:
 
 ```text
 dehradun
 haridwar
 ```
 
-Haridwar overrides only selected BT fields:
+Haridwar overrides selected BT values:
 
 ```json
 {
@@ -427,13 +608,13 @@ Haridwar overrides only selected BT fields:
 }
 ```
 
-All other values fall back to the defaults.
+Other values fall back to the default configuration.
 
-Tenant ID is also included in database queries so that data from one tenant cannot be accessed through another tenant.
+Tenant ID is also included in database queries to prevent cross-tenant application access.
 
 ---
 
-# Worked Example Verification
+# Worked Example
 
 ## Dehradun
 
@@ -460,6 +641,8 @@ Security deposit      = 5,000
 Total                 = 24,485
 ```
 
+---
+
 ## Haridwar
 
 With the Haridwar BT override:
@@ -473,8 +656,6 @@ Security deposit      = 7,500
 Total                 = 27,480
 ```
 
-The implementation uses `BigDecimal` for monetary calculations.
-
 ---
 
 # Workflow Configuration
@@ -485,14 +666,14 @@ Workflow rules are stored in:
 src/main/resources/workflow-rules.json
 ```
 
-The configuration defines:
+Each transition defines:
 
-* current state
-* action
-* target state
-* permitted role
+* Current state
+* Action
+* Target state
+* Permitted role
 
-For example:
+Example:
 
 ```json
 {
@@ -503,9 +684,28 @@ For example:
 }
 ```
 
-This avoids putting the workflow transition matrix directly into service branching logic.
+This avoids hard-coding the complete workflow transition matrix inside the service.
 
-Illegal transitions and incorrect roles return a 4xx response rather than silently doing nothing or returning a 500.
+Invalid actions and unauthorized roles are rejected with client errors.
+
+---
+
+# Tenant Isolation
+
+Every application lookup is tenant scoped.
+
+For example:
+
+```java
+findByTenantIdAndApplicationNumber(
+    tenantId,
+    applicationNumber
+)
+```
+
+Similarly, search operations use tenant-specific repository methods.
+
+This prevents an application belonging to one tenant from being returned to another tenant through the normal API.
 
 ---
 
@@ -529,32 +729,35 @@ Example:
 }
 ```
 
-Validation and business-rule failures are returned as client errors.
+Examples of handled business errors include:
 
-Examples include:
-
-* invalid road type
-* inactive road type
-* invalid dimensions
-* invalid duration
-* invalid workflow action
-* incorrect actor role
-* tenant mismatch
-* invalid application state
+* Invalid road type
+* Inactive road type
+* Invalid dimensions
+* Invalid duration
+* Invalid workflow action
+* Unauthorized workflow role
+* Tenant mismatch
+* Application not found
+* Invalid configured target status
 
 ---
 
 # Application Number Concurrency
 
-Application numbers are generated using a database-backed sequence table:
+Application numbers are generated using:
 
 ```text
 application_sequences
 ```
 
-The sequence is selected using a database row lock (`findForUpdate`) for the tenant, financial year and module.
+The sequence is selected using a database row lock for:
 
-Therefore, two simultaneous creates for the same tenant/year/module cannot receive the same sequence value.
+```text
+tenant + financial year + module
+```
+
+The sequence value is incremented inside the same transaction.
 
 The database also has a unique constraint on:
 
@@ -562,165 +765,260 @@ The database also has a unique constraint on:
 application_number
 ```
 
-which provides an additional uniqueness guarantee.
+This provides an additional uniqueness guarantee.
 
 ---
 
 # Audit / Transition History
 
-Each workflow action creates a record in:
+Every application creation and successful workflow action creates a record in:
 
 ```text
 application_transitions
 ```
 
-The record contains:
+The transition stores:
 
-* application ID
-* previous status
-* action
-* new status
-* actor UUID
-* actor username
-* actor role
-* comment
-* timestamp
+* Application ID
+* Previous status
+* Action
+* New status
+* Actor UUID
+* Actor username
+* Actor role
+* Comment
+* Timestamp
 
-This provides the audit trail needed for displaying the application lifecycle.
+This provides an audit trail for the application lifecycle.
+
+---
+
+# Frontend
+
+The React/TypeScript frontend provides a simple portal for interacting with the backend.
+
+The implemented UI supports:
+
+## Applicant functionality
+
+* Select tenant
+* Enter applicant UUID
+* Enter mobile number
+* Select road type
+* Enter road dimensions
+* Enter duration
+* Select applicant type
+* Select proposed start date
+* Create road cutting application
+* Display calculated fee breakdown
+* Display generated application number
+
+## Application search
+
+The UI supports:
+
+* Search by application number
+* Filter by status
+* Search by mobile number
+* Display application results
+* Display application status
+* Display calculated amount
+* Display available workflow actions
+
+## Officer workflow
+
+The frontend exposes available actions based on the current application status and selected role, including:
+
+```text
+Verify
+Approve
+Reject
+Send Back
+Cancel
+```
+
+The frontend was manually verified against the running Spring Boot backend.
+
+---
+
+# End-to-End Verification
+
+The complete application flow was manually tested.
+
+## Application Creation
+
+A successful request produced:
+
+```text
+DEH-RCP-000007-2026-27
+```
+
+with:
+
+```text
+Status: APPLIED
+Area: 50 sqm
+Restoration Charge: ₹60,000
+Permission Fee: ₹1,500
+Urgency Surcharge: ₹150
+Security Deposit: ₹15,000
+Total Amount: ₹76,650
+```
+
+## Search
+
+The frontend successfully retrieved persisted applications from PostgreSQL.
+
+Example:
+
+```text
+Search completed. 7 application(s) found.
+```
+
+## Workflow
+
+The same application was successfully transitioned through:
+
+```text
+CREATE
+   ↓
+APPLIED
+   ↓ VERIFY
+PENDING_APPROVAL
+   ↓ APPROVE
+APPROVED
+```
+
+This confirms the integration between:
+
+```text
+React
+  ↓
+Spring Boot REST API
+  ↓
+Application Service
+  ↓
+PostgreSQL
+```
 
 ---
 
 # Testing
 
-Tests are implemented using JUnit 5 and Mockito.
+Tests are implemented using:
+
+* JUnit 5
+* Mockito
+* Spring test support
 
 Current test areas include:
 
-* application creation
-* tenant mismatch during creation
-* search by application number
-* search by status
-* search by mobile number
-* search without filters
-* workflow rule validation
-* fee calculation
-* global exception handling
+* Application creation
+* Tenant mismatch during creation
+* Search by application number
+* Search by status
+* Search by mobile number
+* Search without filters
+* Workflow rule validation
+* Fee calculation
+* Global exception handling
 
-Run all tests with:
+Run the backend tests:
 
 ```bash
-mvn test
+mvn clean test
 ```
 
-Build the project with:
+Build the backend:
 
 ```bash
 mvn clean package
 ```
 
-The project was verified with a successful Maven build.
+Build the frontend:
 
----
-
-# Manual API Verification
-
-The backend was also manually verified using PowerShell and the running PostgreSQL container.
-
-A calculation request successfully returned the fee breakdown.
-
-An application was successfully created with:
-
-```text
-DEH-RCP-000006-2026-27
+```bash
+cd frontend
+npm run build
 ```
 
-The application was then successfully transitioned:
+Both backend and frontend builds were successfully verified during development.
+
+---
+
+# Manual Verification
+
+The application was manually tested using:
+
+* PowerShell
+* PostgreSQL
+* Docker
+* Browser-based React frontend
+
+Verified functionality includes:
 
 ```text
-CREATE
-APPLIED
-    ↓
-VERIFY
-PENDING_APPROVAL
-    ↓
-APPROVE
-APPROVED
+Fee calculation
+      ↓
+Application creation
+      ↓
+PostgreSQL persistence
+      ↓
+Application search
+      ↓
+Workflow verification
+      ↓
+Approval
 ```
-
-The PostgreSQL database confirmed the application status and transition history.
-
----
-
-# Frontend Scope
-
-The assignment requires a React/TypeScript portal for both applicant and officer workflows.
-
-The React frontend was not completed within the available time box. I deliberately prioritized the backend core requirements, including fee calculation, configuration-driven rates, tenant isolation, workflow configuration, persistence, search, database migrations and automated tests.
-
-I have therefore not represented the frontend as complete in this submission. The backend APIs were manually tested using PowerShell and PostgreSQL and are ready to be consumed by the required portal.
-
----
-
-# Deliberately Not Built
-
-The following items were intentionally not implemented:
-
-* Authentication/login
-* External identity provider integration
-* Production deployment
-* Remote fee configuration service
-* Payment integration
-* Notification integration
-* Complete React portal
-* Additional stretch functionality
-
-Authentication was explicitly out of scope in the assignment.
-
-The frontend and stretch functionality were left incomplete because the implementation was time-boxed and priority was given to the backend core requirements.
 
 ---
 
 # Assumptions
 
-1. `RequestInfo.userInfo` is trusted as the caller identity because authentication is explicitly out of scope.
-2. Tenant ID from the caller must match the tenant ID used for the requested operation.
-3. Fee configuration is loaded once from the bundled JSON file at application startup.
-4. Application numbers use the `RCP` module code.
-5. The financial year runs from April through March.
-6. Application transition history is immutable audit data.
-7. Application fees are stored as a snapshot when the application is created so that later configuration changes do not silently alter the stored amount.
+1. Authentication is out of scope as specified by the assignment.
+2. `RequestInfo.userInfo` represents the caller identity.
+3. Tenant ID from the caller must match the tenant used for the operation.
+4. Fee configuration is loaded from bundled JSON configuration.
+5. Application numbers use the `RCP` module code.
+6. The financial year runs from April through March.
+7. Transition history is treated as audit data.
+8. Application fees are stored as a snapshot during application creation.
+9. Existing applications retain their stored fee values even if future configuration changes are made.
 
 ---
 
 # Rate Versioning
 
-The current implementation loads rates from a JSON configuration at startup, but it does not maintain historical versions of that configuration.
+The current implementation loads fee rates from JSON configuration at application startup.
 
-The important consequence is that simply changing the JSON file and restarting the service could cause future calculations to use the new rates, while existing applications retain their stored calculated amounts.
+Historical rate versions are not currently maintained.
 
-For a production implementation, I would introduce versioned rate configurations with an effective-from date and a government-order/version identifier. The selected rate version would be stored against the application when it is created. This would allow historical applications to continue using the exact rate configuration under which they were issued, while new applications use the current effective configuration.
+For a production implementation, rate configuration could be versioned using:
+
+* Effective-from date
+* Effective-to date
+* Government order/version ID
+* Configuration version
+
+The selected rate version could then be stored against each application so historical applications always retain the exact rate configuration under which they were created.
 
 ---
 
 # Concurrency
 
-Application number generation uses a database-backed sequence table and a row-level lock for the tenant, financial year and module. The application number also has a database unique constraint.
+Application number generation uses:
 
-This prevents two concurrent creates from intentionally receiving the same application number.
+* Database-backed sequence records
+* Row-level locking
+* Database uniqueness constraint
 
-For workflow actions, the application is loaded and updated inside a transactional service method. The database entity contains a version field, but full optimistic-lock conflict handling has not been completed in this time-boxed implementation.
+This prevents duplicate application numbers under concurrent creation.
 
-In a production version, I would use optimistic locking explicitly for workflow updates so that if two officers act on the same application simultaneously, one action succeeds and the stale action receives a clear conflict response rather than being allowed to overwrite the newer state.
+The application entity also contains a version field.
 
----
+Full optimistic-lock conflict handling for simultaneous workflow actions has not been added in this time-boxed implementation.
 
-# Least Satisfactory Decision
-
-The decision I am least happy with is stopping before completing the React portal. The time box forced me to prioritize the backend because the core requirements around fee correctness, tenant isolation, configuration-driven rules, workflow and persistence were more important than producing a partially working UI.
-
-With two additional days, I would complete the React/TypeScript portal, add API integration tests, strengthen optimistic locking for concurrent workflow actions, and add more boundary tests around validation and configuration.
-
-The main risk of changing this after the service is live is API contract compatibility. Any frontend or external consumer already relying on the existing API responses should not be broken, so additional fields and behaviours should be introduced in a backward-compatible manner.
+For production, optimistic locking could be enabled explicitly so that concurrent officer updates produce a clear conflict response instead of allowing a stale update.
 
 ---
 
@@ -728,45 +1026,70 @@ The main risk of changing this after the service is live is API contract compati
 
 AI assistance was used during development for:
 
-* understanding and breaking down the assignment
-* reviewing implementation approaches
-* generating and refining test cases
-* troubleshooting Docker/PostgreSQL/Flyway issues
-* reviewing API behaviour
-* identifying edge cases in fee and workflow rules
+* Understanding and breaking down the assignment
+* Reviewing implementation approaches
+* Generating and refining test cases
+* Troubleshooting Docker/PostgreSQL/Flyway issues
+* Reviewing API behaviour
+* Identifying edge cases
+* Reviewing fee and workflow logic
+* Assisting with React/TypeScript implementation
 
-One place where AI helped was identifying the importance of configuration-driven workflow transitions and tenant-scoped database queries.
+AI-generated suggestions were reviewed and tested locally.
 
-One area where AI could be misleading is assuming that code is correct simply because it compiles or a happy-path request succeeds. I therefore verified the implementation by running the application, executing API requests manually and checking the resulting PostgreSQL records and transition history.
-
-All submitted code was reviewed and tested in the local environment.
+The implementation was verified through actual Maven builds, automated tests, API requests, PostgreSQL inspection and browser-based frontend testing.
 
 ---
 
-# Time / Scope Decision
+# Scope / Time-Box Decision
 
-The assignment was treated as a strict time-boxed exercise.
+The assignment was treated as a time-boxed exercise.
 
-I prioritized:
+Priority was given to:
 
 1. Correct fee calculation
 2. Configuration-driven rates
 3. Tenant isolation
 4. Application persistence
-5. Workflow and role checks
-6. Transition history
-7. Search
-8. Database migration
-9. Automated tests
-10. Manual API/database verification
+5. Application numbering
+6. Workflow and role checks
+7. Transition history
+8. Search
+9. Database migration
+10. Automated tests
+11. React frontend integration
+12. End-to-end verification
 
-I deliberately stopped rather than expanding the scope with unfinished functionality.
+The core backend and frontend integration were completed and manually verified.
+
+---
+
+# Future Improvements
+
+Potential production improvements include:
+
+* Real authentication and authorization
+* Optimistic locking for workflow actions
+* Versioned fee configuration
+* API integration tests
+* More validation boundary tests
+* Centralized exception/error codes
+* Production deployment configuration
+* External configuration service
+* Notification integration
+* Payment integration
+* Improved frontend role/login management
+* Automated frontend tests
+* CI/CD pipeline
+
+These were intentionally kept outside the core time-boxed implementation.
 
 ---
 
 # Submission Checklist
 
 * [x] Spring Boot backend
+* [x] Java 21
 * [x] PostgreSQL
 * [x] Flyway migration
 * [x] Configuration-driven fee rates
@@ -776,6 +1099,7 @@ I deliberately stopped rather than expanding the scope with unfinished functiona
 * [x] Server-side fee calculation during create
 * [x] Application creation
 * [x] Application numbering
+* [x] Financial year handling
 * [x] Workflow configuration
 * [x] Role-based workflow
 * [x] Transition history
@@ -785,14 +1109,24 @@ I deliberately stopped rather than expanding the scope with unfinished functiona
 * [x] Automated tests
 * [x] Manual API verification
 * [x] Manual database verification
+* [x] React/TypeScript frontend
+* [x] Create application UI
+* [x] Search application UI
+* [x] Workflow action UI
+* [x] Backend/frontend integration
+* [x] Frontend production build
 * [x] `reviewRef: K7Q2`
-* [ ] React portal
-* [ ] Stretch item
 
 ---
 
-## Final Note
+# Final Note
 
-This submission intentionally prioritizes a working, tested backend core over an incomplete frontend implementation. The API, database schema, fee configuration, workflow configuration and tests are included in the repository and can be run locally using the commands above.
+This submission provides a working end-to-end Road Cutting Permission application.
 
-Spec revision: 3.1-KESTREL
+The backend implements the core business requirements including fee calculation, tenant-specific configuration, application persistence, application numbering, workflow management, role validation, transition history and search.
+
+The React/TypeScript frontend provides the corresponding application creation, search and workflow experience and has been manually verified against the running backend.
+
+The project can be started locally using Docker for PostgreSQL, Maven for the backend and npm/Vite for the frontend.
+
+**Spec revision: 3.1-KESTREL**
